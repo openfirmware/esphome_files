@@ -1,0 +1,81 @@
+esphome:
+  name: b1_apitest
+  platform: ESP8266
+  board: d1_mini
+  
+wifi:
+  ssid: !secret ssid_name
+  password: !secret ssid_psk
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: !secret api_pass
+
+ota:
+  password: !secret ota_pass
+
+# Sync time with Home Assistant, as a connection should be available
+# 99% of the time!
+# We then run a check every 15 seconds as to whether the API connection
+# is open. Home Assistant can hold it open, but so can the esphome
+# command-line client logger.
+# We then use the API status to update the "api status" binary sensor,
+# which in turn can be used elsewhere in automations and lambdas.
+# We could swap in "mqtt" for "api", maybe.
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time:
+      - seconds: /15
+        then:
+          if:
+            condition:
+              api.connected:
+            then:
+              - binary_sensor.template.publish:
+                  id: api_status
+                  state: ON
+            else:
+              - binary_sensor.template.publish:
+                  id: api_status
+                  state: OFF
+
+# A binary sensor holds the state of whether the node is connected to
+# API. When the state changes, actions are called in the lambda.
+# Alternatively, other templates can query this template and change to
+# local or remote sensors, for example.
+binary_sensor:
+  - platform: template
+    name: "API Connection Online"
+    internal: true
+    id: api_status
+    on_state:
+      then:
+        # New state is passed in as "x" boolean.
+        # Turn OFF the LED if we can connect to API/HA.
+        # Turn it ON if the api cannot be reached.
+        - lambda: !lambda |-
+            if (x) {
+              auto call = id(led_binary).turn_off();
+              call.perform();
+            } else {
+              auto call = id(led_binary).turn_on();
+              call.perform();
+            }
+
+output:
+  - platform: gpio
+    pin:
+      number: GPIO2
+      inverted: true
+    id: LED
+
+light:
+  - platform: binary
+    name: "LED"
+    output: LED
+    id: led_binary
+
