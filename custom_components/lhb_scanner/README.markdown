@@ -19,3 +19,5 @@ text_sensor:
 ```
 
 At the moment, any BLE device that has the name prefix "LHB-" is matched. Support for GATT interrogation of BLE devices is not yet available in esphome.
+
+This produce a lot of output logging. I recommend disabling Home Assistant API integration for this `text_sensor` by marking it as `internal: true`.

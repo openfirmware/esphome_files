@@ -9,9 +9,12 @@
 namespace esphome {
 namespace lighthouses {
 
-class LHBScanner : public text_sensor::TextSensor, public esp32_ble_tracker::ESPBTDeviceListener, public Component {
+class LHBScanner : public text_sensor::TextSensor,
+				   public esp32_ble_tracker::ESPBTDeviceListener,
+				   public Component {
  public:
-  bool parse_device(const esp32_ble_tracker::ESPBTDevice &device) override;
+  bool parse_device(const esp32_ble_tracker::ESPBTDevice &device)
+  	   override;
 
   void dump_config() override;
   float get_setup_priority();
