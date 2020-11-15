@@ -1,0 +1,52 @@
+esphome:
+  name: xmas_rf_bridge
+  platform: ESP32
+  board: nodemcu-32s
+
+wifi:
+  ssid: !secret ssid_name
+  password: !secret ssid_psk
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: !secret ha_pass
+
+ota:
+  password: !secret ota_pass
+
+# For sending 433 MHz messages to the xmas lights.
+# Data pin for 433 MHz transmitter module must be connected to GPIO32.
+remote_transmitter:
+  pin: GPIO32
+  carrier_duty_percent: 100%
+
+switch:
+  # This adds a single entity for Home Assistant that has on and off
+  # buttons (separate b/c of `assumed_state`). These remote codes were
+  # translated from the codes on my blog post:
+  # https://www.jamesbadger.ca/2016/11/10/receiving-on-433-920mhz/
+  # 
+  # These codes were converted by using a 433 MHz receiver module with
+  # ESPHome to "capture" the ON and OFF signals from the xmas lights
+  # remote control. I then compared the patterns to the ones in the blog
+  # post, and found a conversion factor (~115) that also worked for the
+  # other remote actions.
+  - platform: template
+    name: "Outdoor Christmas Lights"
+    optimistic: true
+    assumed_state: true
+    turn_on_action:
+      - remote_transmitter.transmit_raw:
+          repeat:
+            times: 2
+            wait_time: 10s
+          code: [2990, -1380, 460, -460, 460, -920, 460, -460, 460, -920, 460, -920, 460, -460, 460, -460, 460, -920, 460, -920, 460, -920, 460, -460, 460, -920, 460, -460, 460, -460, 460, -460, 460, -460, 460, -8165]
+    turn_off_action:
+      - remote_transmitter.transmit_raw:
+          repeat:
+            times: 2
+            wait_time: 10s
+          code: [2990, -1380, 460, -460, 460, -920, 460, -460, 460, -920, 460, -920, 460, -460, 460, -460, 460, -920, 460, -920, 460, -920, 460, -460, 460, -920, 460, -460, 460, -460, 460, -460, 460, -920, 460, -8165]
